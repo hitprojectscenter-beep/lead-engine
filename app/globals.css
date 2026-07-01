@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f6f8fc;
+  --card: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --edge: #e2e8f0;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Thin, tidy scrollbars for the horizontal board */
+.scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.scroll-x::-webkit-scrollbar {
+  height: 8px;
+}
+.scroll-x::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-600;
+  }
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-100;
+  }
+  .input {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+}
