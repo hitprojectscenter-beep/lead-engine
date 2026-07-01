@@ -4,6 +4,7 @@
 //  Twilio credentials are not configured (dev mode).
 // ─────────────────────────────────────────────────────────────
 import twilio from "twilio";
+import { normalizePhone } from "../utils";
 
 const sid = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -11,6 +12,23 @@ const from = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
 
 export const hasTwilio = !!(sid && token);
 export const twilioAuth = hasTwilio ? { sid: sid!, token: token! } : undefined;
+
+// Optional allow-list of sender phone numbers (comma-separated in env).
+// When set, only these numbers may open leads via the WhatsApp webhook —
+// essential for an internal intake tool so strangers can't inject leads.
+const allowedSenders = (process.env.WHATSAPP_ALLOWED_SENDERS || "")
+  .split(",")
+  .map((s) => normalizePhone(s))
+  .filter((s): s is string => !!s);
+
+export const whitelistActive = allowedSenders.length > 0;
+
+/** True if this sender may open leads. Open to all when no allow-list is set. */
+export function isSenderAllowed(fromAddr?: string | null): boolean {
+  if (!whitelistActive) return true;
+  const n = normalizePhone(fromAddr);
+  return !!n && allowedSenders.includes(n);
+}
 
 let client: ReturnType<typeof twilio> | null = null;
 function getClient() {

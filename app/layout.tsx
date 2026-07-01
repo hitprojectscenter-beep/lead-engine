@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Assistant } from "next/font/google";
 import Link from "next/link";
 import { Radio, LayoutGrid, BarChart3, QrCode, Users, Send } from "lucide-react";
@@ -9,6 +9,16 @@ const assistant = Assistant({ subsets: ["hebrew", "latin"], weight: ["400", "500
 export const metadata: Metadata = {
   title: "מנוע לידים — Lead Engine",
   description: "קליטה אוטומטית, ניקוד וניהול לידים אומניצ'אנל",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "פתיחת ליד" },
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3b6fed",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

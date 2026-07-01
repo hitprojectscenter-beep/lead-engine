@@ -28,6 +28,8 @@ export type LeadKind = (typeof LEAD_KINDS)[number];
 export const LEAD_CHANNELS = [
   "whatsapp_text",
   "whatsapp_voice",
+  "app_form",
+  "app_voice",
   "landing_qr",
   "landing_web",
   "email",
@@ -199,6 +201,8 @@ export const KIND_LABELS: Record<LeadKind, string> = {
 export const CHANNEL_LABELS: Record<LeadChannel, string> = {
   whatsapp_text: "ווטסאפ (טקסט)",
   whatsapp_voice: "ווטסאפ (הקלטה)",
+  app_form: "אפליקציה (טופס)",
+  app_voice: "אפליקציה (הקלטה)",
   landing_qr: "דף נחיתה (QR)",
   landing_web: "דף נחיתה (אתר)",
   email: "אימייל",

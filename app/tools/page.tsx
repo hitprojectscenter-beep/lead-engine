@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MessageCircle, QrCode, Download, Database, Mic, CheckCircle2, XCircle } from "lucide-react";
+import Link from "next/link";
+import { MessageCircle, QrCode, Download, Database, Mic, CheckCircle2, XCircle, Smartphone, ShieldCheck } from "lucide-react";
 
 interface Health {
   hasDb: boolean;
   hasOpenAI: boolean;
   hasTwilio: boolean;
+  whitelistActive: boolean;
   baseUrl: string;
 }
 
@@ -22,6 +24,8 @@ export default function ToolsPage() {
   const qrUrl = `/api/qr?slug=${encodeURIComponent(slug)}&size=320`;
   const landingUrl = `${base}/l/${slug}?via=qr`;
   const webhookUrl = `${base}/api/webhooks/whatsapp`;
+  const intakeQr = `/api/qr?to=${encodeURIComponent("/intake")}&size=320`;
+  const intakeUrl = `${base}/intake`;
 
   return (
     <div className="space-y-5">
@@ -33,10 +37,38 @@ export default function ToolsPage() {
       {/* Integration status */}
       <div className="card p-4">
         <h2 className="mb-3 font-bold">סטטוס אינטגרציות</h2>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <StatusRow ok={health?.hasDb} icon={<Database size={16} />} label="מסד נתונים (Postgres)" off="פעיל אחסון JSON מקומי" />
           <StatusRow ok={health?.hasOpenAI} icon={<Mic size={16} />} label="OpenAI (תמלול + חילוץ)" off="חילוץ היוריסטי בלבד" />
           <StatusRow ok={health?.hasTwilio} icon={<MessageCircle size={16} />} label="Twilio WhatsApp" off="ללא מענה אוטומטי" />
+          <StatusRow ok={health?.whitelistActive} icon={<ShieldCheck size={16} />} label="Whitelist מספרי ווטסאפ" off="פתוח לכל שולח (הגדירו env)" />
+        </div>
+      </div>
+
+      {/* PWA intake app */}
+      <div className="card p-5">
+        <h2 className="mb-1 flex items-center gap-2 font-bold">
+          <Smartphone size={18} /> אפליקציית פתיחת ליד (PWA)
+        </h2>
+        <p className="mb-3 text-xs text-slate-500">
+          מסך ייעודי לשטח: טופס מהיר או הקלטה קולית שמתומללת ויוצרת ליד. סרקו כדי לפתוח בטלפון, ואז "הוסף למסך הבית" — יתנהג כמו אפליקציה.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-[auto,1fr] sm:items-center">
+          <div className="grid place-items-center rounded-lg border border-slate-100 bg-slate-50 p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={intakeQr} alt="QR לאפליקציה" className="h-40 w-40" />
+          </div>
+          <div className="space-y-2 text-sm">
+            <Link href="/intake" className="btn-primary w-fit">
+              <Smartphone size={16} /> פתח את המסך
+            </Link>
+            <ol className="list-inside list-decimal space-y-1 text-slate-600">
+              <li>סרקו את ה-QR בטלפון (או פתחו {intakeUrl}).</li>
+              <li>בתפריט הדפדפן: <b>"הוסף למסך הבית"</b>.</li>
+              <li>פותחים מהאייקון → טופס/הקלטה → ליד נוצר מיד.</li>
+            </ol>
+            <p className="text-[11px] text-slate-400">הקלטה קולית דורשת הרשאת מיקרופון + מפתח OpenAI לתמלול.</p>
+          </div>
         </div>
       </div>
 
@@ -84,6 +116,9 @@ export default function ToolsPage() {
           </ol>
           <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
             ל-production אמיתי נדרש מספר WhatsApp Business מאושר (WABA) במקום ה-Sandbox.
+          </p>
+          <p className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
+            🔒 אבטחה: הגדירו <code className="rounded bg-slate-200 px-1">WHATSAPP_ALLOWED_SENDERS</code> (מספרים מופרדים בפסיק) כדי לאפשר פתיחת לידים רק ממספרים מורשים.
           </p>
         </div>
       </div>

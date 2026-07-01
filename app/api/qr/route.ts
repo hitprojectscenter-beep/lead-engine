@@ -9,10 +9,15 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
-  const slug = (sp.get("slug") || "general").replace(/[^a-z0-9\-_]/gi, "");
   const base =
     process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin || "http://localhost:3000";
-  const target = `${base}/l/${slug}?via=qr`;
+
+  // `to` = an explicit in-app path (e.g. /intake); otherwise a landing slug.
+  const to = sp.get("to");
+  const slug = (sp.get("slug") || "general").replace(/[^a-z0-9\-_]/gi, "");
+  const target = to
+    ? `${base}${to.startsWith("/") ? "" : "/"}${to.replace(/[^a-z0-9\-_/?=&]/gi, "")}`
+    : `${base}/l/${slug}?via=qr`;
 
   const png = await QRCode.toBuffer(target, {
     width: Number(sp.get("size")) || 512,

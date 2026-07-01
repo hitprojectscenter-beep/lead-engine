@@ -1,0 +1,16 @@
+{
+  "name": "מנוע לידים — פתיחת ליד",
+  "short_name": "פתיחת ליד",
+  "description": "פתיחת ליד חדש מהשטח — טופס מהיר או הקלטה קולית שמתומללת אוטומטית.",
+  "start_url": "/intake",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#3b6fed",
+  "theme_color": "#3b6fed",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

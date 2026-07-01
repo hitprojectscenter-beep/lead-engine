@@ -7,7 +7,13 @@
 // ─────────────────────────────────────────────────────────────
 import { NextRequest } from "next/server";
 import { ingestLead } from "@/lib/ingest/ingest";
-import { validateTwilioSignature, sendWhatsApp, hasTwilio } from "@/lib/ingest/whatsapp";
+import {
+  validateTwilioSignature,
+  sendWhatsApp,
+  hasTwilio,
+  isSenderAllowed,
+  whitelistActive,
+} from "@/lib/ingest/whatsapp";
 import { STATUS_LABELS } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -41,6 +47,13 @@ export async function POST(req: NextRequest) {
   }
 
   const from = params.From ?? params.WaId ?? null;
+
+  // Sender allow-list — reject strangers when a whitelist is configured.
+  if (!isSenderAllowed(from)) {
+    console.warn("[whatsapp webhook] rejected non-whitelisted sender", from);
+    return twiml("מספר זה אינו מורשה לפתיחת לידים במערכת.");
+  }
+
   const body = params.Body ?? "";
   const numMedia = parseInt(params.NumMedia ?? "0", 10) || 0;
 

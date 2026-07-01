@@ -18,6 +18,7 @@ export interface IngestInput {
   channel: LeadChannel;
   from?: string | null; // sender phone / identifier
   text?: string | null; // message body
+  transcript?: string | null; // pre-computed transcript (e.g. from an app upload)
   audioUrl?: string | null; // voice note (Twilio media URL, etc.)
   audioIsTwilio?: boolean; // needs Twilio basic-auth to fetch
   source?: string | null; // campaign / landing slug / referrer
@@ -41,9 +42,9 @@ export interface IngestResult {
 export async function ingestLead(input: IngestInput): Promise<IngestResult> {
   const actor = input.actor ?? "system";
 
-  // 1. Transcribe audio if present
-  let transcript: string | null = null;
-  if (input.audioUrl) {
+  // 1. Transcribe audio if present (or use a transcript supplied by the caller)
+  let transcript: string | null = input.transcript ?? null;
+  if (!transcript && input.audioUrl) {
     try {
       transcript = await transcribeAudioUrl(
         input.audioUrl,
