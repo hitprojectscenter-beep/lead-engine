@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
 import Link from "next/link";
-import { Radio, LayoutGrid, BarChart3, QrCode } from "lucide-react";
+import { Radio, LayoutGrid, BarChart3, QrCode, Users, Send } from "lucide-react";
 import "./globals.css";
 
 const assistant = Assistant({ subsets: ["hebrew", "latin"], weight: ["400", "500", "600", "700"] });
@@ -27,6 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <nav className="flex items-center gap-1 text-sm">
                 <NavLink href="/" icon={<LayoutGrid size={16} />}>
                   לוח לידים
+                </NavLink>
+                <NavLink href="/reps" icon={<Users size={16} />}>
+                  נציגים
+                </NavLink>
+                <NavLink href="/campaigns" icon={<Send size={16} />}>
+                  מסעות טיפוח
                 </NavLink>
                 <NavLink href="/analytics" icon={<BarChart3 size={16} />}>
                   אנליטיקה

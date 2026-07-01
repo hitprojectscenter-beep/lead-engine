@@ -8,8 +8,14 @@ import path from "node:path";
 import os from "node:os";
 import { and, desc, eq, or } from "drizzle-orm";
 import { db, hasDb } from "./client";
-import { leadsTable, activitiesTable, customersTable } from "./schema";
-import type { Activity, Customer, Lead, LeadStatus } from "../types";
+import {
+  leadsTable,
+  activitiesTable,
+  customersTable,
+  repsTable,
+  enrollmentsTable,
+} from "./schema";
+import type { Activity, Customer, Enrollment, Lead, LeadStatus, Rep } from "../types";
 import { newId, normalizeEmail, normalizePhone } from "../utils";
 
 export interface LeadFilter {
@@ -31,6 +37,15 @@ export interface Store {
   getCustomer(id: string): Promise<Customer | null>;
   findCustomerByContact(phone?: string | null, email?: string | null): Promise<Customer | null>;
   upsertCustomer(c: Partial<Customer> & { name: string }): Promise<Customer>;
+
+  listReps(): Promise<Rep[]>;
+  getRep(id: string): Promise<Rep | null>;
+  upsertRep(r: Partial<Rep> & { name: string }): Promise<Rep>;
+  deleteRep(id: string): Promise<boolean>;
+
+  listEnrollments(filter?: { leadId?: string; status?: string }): Promise<Enrollment[]>;
+  createEnrollment(e: Omit<Enrollment, "id">): Promise<Enrollment>;
+  updateEnrollment(id: string, patch: Partial<Enrollment>): Promise<Enrollment | null>;
 }
 
 // ── defaults ────────────────────────────────────────────────
@@ -175,6 +190,59 @@ const jsonStore: Store = {
     await writeJson("customers.json", all);
     return record;
   },
+  async listReps() {
+    return readJson<Rep[]>("reps.json", []);
+  },
+  async getRep(id) {
+    const all = await readJson<Rep[]>("reps.json", []);
+    return all.find((r) => r.id === id) ?? null;
+  },
+  async upsertRep(r) {
+    const all = await readJson<Rep[]>("reps.json", []);
+    const record: Rep = {
+      id: r.id ?? newId("rep"),
+      name: r.name,
+      active: r.active ?? true,
+      regions: r.regions ?? [],
+      specialties: r.specialties ?? [],
+      capacity: r.capacity ?? 25,
+    };
+    const i = r.id ? all.findIndex((x) => x.id === r.id) : -1;
+    if (i >= 0) all[i] = record;
+    else all.push(record);
+    await writeJson("reps.json", all);
+    return record;
+  },
+  async deleteRep(id) {
+    const all = await readJson<Rep[]>("reps.json", []);
+    const next = all.filter((r) => r.id !== id);
+    if (next.length === all.length) return false;
+    await writeJson("reps.json", next);
+    return true;
+  },
+  async listEnrollments(filter) {
+    const all = await readJson<Enrollment[]>("enrollments.json", []);
+    return all.filter(
+      (e) =>
+        (!filter?.leadId || e.leadId === filter.leadId) &&
+        (!filter?.status || e.status === filter.status),
+    );
+  },
+  async createEnrollment(e) {
+    const all = await readJson<Enrollment[]>("enrollments.json", []);
+    const record: Enrollment = { id: newId("enr"), ...e };
+    all.push(record);
+    await writeJson("enrollments.json", all);
+    return record;
+  },
+  async updateEnrollment(id, patch) {
+    const all = await readJson<Enrollment[]>("enrollments.json", []);
+    const i = all.findIndex((e) => e.id === id);
+    if (i < 0) return null;
+    all[i] = { ...all[i], ...patch, id };
+    await writeJson("enrollments.json", all);
+    return all[i];
+  },
 };
 
 // ── Postgres store ──────────────────────────────────────────
@@ -290,6 +358,82 @@ const pgStore: Store = {
       .values(record)
       .onConflictDoUpdate({ target: customersTable.id, set: record });
     return record;
+  },
+  async listReps() {
+    const rows = await db!.select().from(repsTable);
+    return rows.map((r) => ({ ...r, regions: r.regions ?? [], specialties: r.specialties ?? [] }));
+  },
+  async getRep(id) {
+    const rows = await db!.select().from(repsTable).where(eq(repsTable.id, id)).limit(1);
+    const r = rows[0];
+    return r ? { ...r, regions: r.regions ?? [], specialties: r.specialties ?? [] } : null;
+  },
+  async upsertRep(r) {
+    const record: Rep = {
+      id: r.id ?? newId("rep"),
+      name: r.name,
+      active: r.active ?? true,
+      regions: r.regions ?? [],
+      specialties: r.specialties ?? [],
+      capacity: r.capacity ?? 25,
+    };
+    await db!
+      .insert(repsTable)
+      .values(record)
+      .onConflictDoUpdate({ target: repsTable.id, set: record });
+    return record;
+  },
+  async deleteRep(id) {
+    const rows = await db!.delete(repsTable).where(eq(repsTable.id, id)).returning();
+    return rows.length > 0;
+  },
+  async listEnrollments(filter) {
+    const conds = [];
+    if (filter?.leadId) conds.push(eq(enrollmentsTable.leadId, filter.leadId));
+    if (filter?.status) conds.push(eq(enrollmentsTable.status, filter.status));
+    const rows = await db!
+      .select()
+      .from(enrollmentsTable)
+      .where(conds.length ? and(...conds) : undefined);
+    return rows.map((r) => ({
+      ...r,
+      enrolledAt: r.enrolledAt.toISOString(),
+      nextRunAt: r.nextRunAt.toISOString(),
+      lastRunAt: r.lastRunAt ? r.lastRunAt.toISOString() : null,
+      status: r.status as Enrollment["status"],
+    }));
+  },
+  async createEnrollment(e) {
+    const record: Enrollment = { id: newId("enr"), ...e };
+    await db!.insert(enrollmentsTable).values({
+      ...record,
+      enrolledAt: new Date(record.enrolledAt),
+      nextRunAt: new Date(record.nextRunAt),
+      lastRunAt: record.lastRunAt ? new Date(record.lastRunAt) : null,
+    });
+    return record;
+  },
+  async updateEnrollment(id, patch) {
+    const set: Record<string, unknown> = { ...patch };
+    delete set.id;
+    if (patch.nextRunAt) set.nextRunAt = new Date(patch.nextRunAt);
+    if (patch.lastRunAt) set.lastRunAt = new Date(patch.lastRunAt);
+    if (patch.enrolledAt) set.enrolledAt = new Date(patch.enrolledAt);
+    const rows = await db!
+      .update(enrollmentsTable)
+      .set(set)
+      .where(eq(enrollmentsTable.id, id))
+      .returning();
+    const r = rows[0];
+    return r
+      ? {
+          ...r,
+          enrolledAt: r.enrolledAt.toISOString(),
+          nextRunAt: r.nextRunAt.toISOString(),
+          lastRunAt: r.lastRunAt ? r.lastRunAt.toISOString() : null,
+          status: r.status as Enrollment["status"],
+        }
+      : null;
   },
 };
 

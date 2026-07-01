@@ -11,6 +11,8 @@ import {
   Send,
   Loader2,
   Trash2,
+  UserCheck,
+  Route,
 } from "lucide-react";
 import {
   LEAD_STATUSES,
@@ -19,10 +21,13 @@ import {
   CHANNEL_LABELS,
   KIND_LABELS,
   ACTIVITY_LABELS,
+  ENROLLMENT_STATUS_LABELS,
   type Activity,
   type Customer,
+  type Enrollment,
   type Lead,
   type LeadStatus,
+  type Rep,
 } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -31,6 +36,8 @@ export default function LeadPage({ params }: { params: Promise<{ id: string }> }
   const [lead, setLead] = useState<Lead | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [owner, setOwner] = useState<Rep | null>(null);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -40,7 +47,28 @@ export default function LeadPage({ params }: { params: Promise<{ id: string }> }
     setLead(r.lead);
     setActivities(r.activities ?? []);
     setCustomer(r.customer ?? null);
+    setOwner(r.owner ?? null);
+    setEnrollments(r.enrollments ?? []);
     setLoading(false);
+  }
+
+  async function routeNow() {
+    setBusy(true);
+    await fetch(`/api/leads/${id}/route-now`, { method: "POST" });
+    setBusy(false);
+    load();
+  }
+  async function enroll() {
+    setBusy(true);
+    await fetch(`/api/leads/${id}/enroll`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    setBusy(false);
+    load();
+  }
+  async function stopNurture() {
+    setBusy(true);
+    await fetch(`/api/leads/${id}/enroll`, { method: "DELETE" });
+    setBusy(false);
+    load();
   }
   useEffect(() => {
     load();
@@ -192,12 +220,46 @@ export default function LeadPage({ params }: { params: Promise<{ id: string }> }
               ))}
             </select>
             <label className="mt-3 block text-xs text-slate-500">נציג מטפל</label>
-            <input
-              className="input mt-1"
-              placeholder="מזהה נציג"
-              defaultValue={lead.ownerId ?? ""}
-              onBlur={(e) => e.target.value !== (lead.ownerId ?? "") && patch({ ownerId: e.target.value || null })}
-            />
+            <div className="mt-1 flex items-center gap-2">
+              <div className="flex flex-1 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                <UserCheck size={15} className="text-slate-400" />
+                {owner ? owner.name : lead.ownerId ? lead.ownerId : "לא משויך"}
+              </div>
+              <button className="btn-ghost shrink-0" onClick={routeNow} disabled={busy} title="ניתוב אוטומטי לנציג המתאים ביותר">
+                <Route size={15} /> נתב
+              </button>
+            </div>
+          </div>
+
+          {/* Nurturing */}
+          <div className="card p-4">
+            <h3 className="mb-2 flex items-center gap-1 font-bold">
+              <Send size={15} /> מסע טיפוח
+            </h3>
+            {enrollments.filter((e) => e.status === "active").length > 0 ? (
+              enrollments
+                .filter((e) => e.status === "active")
+                .map((e) => (
+                  <div key={e.id} className="mb-2 rounded-lg bg-green-50 p-2 text-sm text-green-800">
+                    פעיל · שלב {e.stepIndex + 1} · השלב הבא: {formatDateTime(e.nextRunAt)}
+                  </div>
+                ))
+            ) : (
+              <p className="mb-2 text-sm text-slate-500">
+                {enrollments.length > 0
+                  ? `אין מסע פעיל (${enrollments.map((e) => ENROLLMENT_STATUS_LABELS[e.status]).join(", ")})`
+                  : "הליד אינו במסע טיפוח."}
+              </p>
+            )}
+            {enrollments.some((e) => e.status === "active") ? (
+              <button className="btn-ghost text-amber-700 hover:bg-amber-50" onClick={stopNurture} disabled={busy}>
+                הפסק טיפוח
+              </button>
+            ) : (
+              <button className="btn-ghost" onClick={enroll} disabled={busy}>
+                <Send size={14} /> צרף למסע מתאים
+              </button>
+            )}
           </div>
 
           {scoredReasons.length > 0 && (

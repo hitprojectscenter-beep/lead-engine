@@ -11,6 +11,8 @@ import { parseLead } from "./parse";
 import { transcribeAudioUrl } from "./transcribe";
 import { twilioAuth } from "./whatsapp";
 import { normalizeEmail, normalizePhone } from "../utils";
+import { routeLead } from "../routing/route";
+import { autoEnroll, stopEnrollments } from "../nurture/enroll";
 
 export interface IngestInput {
   channel: LeadChannel;
@@ -167,6 +169,29 @@ export async function ingestLead(input: IngestInput): Promise<IngestResult> {
     message: `ניקוד: ${scored.score}/100 · ${scored.kind.toUpperCase()} · ${scored.temperature}`,
     meta: { reasons: scored.reasons },
   });
+
+  // 8. Auto-route to a rep if still unassigned
+  if (!lead.ownerId) {
+    const decision = await routeLead(lead, customer?.ownerId);
+    if (decision.repId) {
+      lead = (await store.updateLead(lead.id, { ownerId: decision.repId })) ?? lead;
+      await store.addActivity({
+        leadId: lead.id,
+        kind: "routed",
+        actor: "system",
+        message: `נותב לנציג ${decision.repName} — ${decision.reason}`,
+        meta: { repId: decision.repId },
+      });
+    }
+  }
+
+  // 9. Nurturing: new lead → auto-enroll in a fitting drip;
+  //    an inbound on an EXISTING lead = engagement → pause its drip.
+  if (created) {
+    await autoEnroll(lead);
+  } else {
+    await stopEnrollments(lead.id, "התקבלה הודעה נכנסת מהליד");
+  }
 
   return { lead, created, transcript };
 }

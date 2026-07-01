@@ -8,6 +8,12 @@
 import { store } from "./store";
 import { ingestLead } from "../ingest/ingest";
 
+const REPS = [
+  { id: "rep_noa", name: "נועה שרון", regions: ["מרכז"], specialties: ["פרימיום", "דוחות"], capacity: 25 },
+  { id: "rep_amir", name: "אמיר כהן", regions: ["צפון"], specialties: ["בסיס", "מנוי"], capacity: 25 },
+  { id: "rep_tal", name: "טל לוי", regions: ["דרום"], specialties: ["שדרוג", "אינטגרציה"], capacity: 25 },
+];
+
 const CUSTOMERS = [
   {
     name: "דנה כהן",
@@ -72,6 +78,8 @@ const SAMPLE_INBOUND = [
 ];
 
 async function main() {
+  console.log("Seeding reps…");
+  for (const r of REPS) await store.upsertRep(r);
   console.log("Seeding customers…");
   for (const c of CUSTOMERS) await store.upsertCustomer(c);
 
@@ -93,6 +101,7 @@ if (isMain) main().then(() => process.exit(0)).catch((e) => (console.error(e), p
 export async function ensureSeed(): Promise<void> {
   const existing = await store.listLeads();
   if (existing.length > 0) return;
+  for (const r of REPS) await store.upsertRep(r);
   for (const c of CUSTOMERS) await store.upsertCustomer(c);
   for (const s of SAMPLE_INBOUND) await ingestLead({ ...s, actor: "seed" });
 }

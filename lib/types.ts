@@ -91,6 +91,10 @@ export const ACTIVITY_KINDS = [
   "outreach", // message sent to the lead
   "customer_matched",
   "auto_reply",
+  "routed", // auto-assigned to a rep by the routing engine
+  "enrolled", // added to a nurturing campaign
+  "nurture_sent", // a drip step was sent
+  "nurture_stopped", // sequence ended / paused
 ] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
@@ -103,6 +107,54 @@ export interface Activity {
   message: string;
   meta?: Record<string, unknown>;
 }
+
+/** Sales rep — the target of lead routing. */
+export interface Rep {
+  id: string;
+  name: string;
+  active: boolean;
+  regions: string[]; // geographic areas this rep covers
+  specialties: string[]; // product/topic keywords this rep handles
+  capacity: number; // max recommended concurrent open leads
+}
+
+/** One step in a nurturing (drip) sequence. */
+export interface CampaignStep {
+  channel: "whatsapp" | "email";
+  delayHours: number; // hours after the previous step (step 0 = after enrollment)
+  template: string; // supports {{name}} and {{product}} placeholders
+}
+
+/** A predefined nurturing sequence (defined in code, see lib/nurture/campaigns.ts). */
+export interface Campaign {
+  id: string;
+  name: string;
+  description: string;
+  audience: "cold" | "warm" | "existing_customer" | "default";
+  steps: CampaignStep[];
+}
+
+export const ENROLLMENT_STATUSES = ["active", "completed", "stopped"] as const;
+export type EnrollmentStatus = (typeof ENROLLMENT_STATUSES)[number];
+
+/** A lead's live state within a nurturing sequence. */
+export interface Enrollment {
+  id: string;
+  leadId: string;
+  campaignId: string;
+  stepIndex: number; // next step to send
+  status: EnrollmentStatus;
+  enrolledAt: string;
+  nextRunAt: string; // when the next step is due (ISO)
+  lastRunAt: string | null;
+  stoppedReason: string | null;
+}
+
+export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
+  active: "פעיל",
+  completed: "הושלם",
+  stopped: "הופסק",
+};
 
 /** Minimal existing-customer record for cross-sell matching. */
 export interface Customer {
@@ -176,6 +228,10 @@ export const ACTIVITY_LABELS: Record<ActivityKind, string> = {
   outreach: "פנייה ללקוח",
   customer_matched: "זוהה לקוח קיים",
   auto_reply: "מענה אוטומטי",
+  routed: "נותב לנציג",
+  enrolled: "צורף למסע טיפוח",
+  nurture_sent: "נשלח מסר טיפוח",
+  nurture_stopped: "מסע טיפוח הופסק",
 };
 
 /** Structured fields the parser tries to extract from free text / a transcript. */

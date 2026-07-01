@@ -65,6 +65,34 @@ export const activitiesTable = leads.table(
   }),
 );
 
+export const repsTable = leads.table("reps", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  active: boolean("active").notNull().default(true),
+  regions: jsonb("regions").$type<string[]>().notNull().default([]),
+  specialties: jsonb("specialties").$type<string[]>().notNull().default([]),
+  capacity: integer("capacity").notNull().default(25),
+});
+
+export const enrollmentsTable = leads.table(
+  "enrollments",
+  {
+    id: text("id").primaryKey(),
+    leadId: text("lead_id").notNull(),
+    campaignId: text("campaign_id").notNull(),
+    stepIndex: integer("step_index").notNull().default(0),
+    status: text("status").notNull().default("active"),
+    enrolledAt: timestamp("enrolled_at", { withTimezone: true }).defaultNow().notNull(),
+    nextRunAt: timestamp("next_run_at", { withTimezone: true }).notNull(),
+    lastRunAt: timestamp("last_run_at", { withTimezone: true }),
+    stoppedReason: text("stopped_reason"),
+  },
+  (t) => ({
+    leadIdx: index("enrollments_lead_idx").on(t.leadId),
+    statusIdx: index("enrollments_status_idx").on(t.status),
+  }),
+);
+
 export const customersTable = leads.table(
   "customers",
   {

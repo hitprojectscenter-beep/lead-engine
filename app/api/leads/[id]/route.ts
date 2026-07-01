@@ -10,9 +10,13 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const { id } = await ctx.params;
   const lead = await store.getLead(id);
   if (!lead) return Response.json({ error: "not found" }, { status: 404 });
-  const activities = await store.listActivities(id);
+  const [activities, enrollments] = await Promise.all([
+    store.listActivities(id),
+    store.listEnrollments({ leadId: id }),
+  ]);
   const customer = lead.customerId ? await store.getCustomer(lead.customerId) : null;
-  return Response.json({ lead, activities, customer });
+  const owner = lead.ownerId ? await store.getRep(lead.ownerId) : null;
+  return Response.json({ lead, activities, customer, enrollments, owner });
 }
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
