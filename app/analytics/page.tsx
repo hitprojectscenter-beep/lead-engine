@@ -88,7 +88,8 @@ export default function AnalyticsPage() {
 
       <div className="card p-5">
         <h2 className="mb-3 font-bold">ROI לפי מקור</h2>
-        <table className="w-full text-sm">
+        <div className="-mx-2 overflow-x-auto px-2">
+        <table className="w-full min-w-[420px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-right text-slate-500">
               <th className="py-2">מקור</th>
@@ -110,6 +111,7 @@ export default function AnalyticsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

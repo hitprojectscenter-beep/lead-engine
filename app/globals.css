@@ -10,16 +10,58 @@
   --edge: #e2e8f0;
 }
 
+html {
+  /* Stop iOS/old-browser auto text inflation on rotate. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
   background: var(--bg);
   color: var(--ink);
+  /* Prevent accidental page-level horizontal scroll on small screens. */
+  max-width: 100%;
+  overflow-x: hidden;
+  /* Smooth momentum scrolling on iOS. */
+  -webkit-overflow-scrolling: touch;
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Full dynamic-viewport height with a vh fallback (fixes iOS Safari 100vh). */
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.h-dvh {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Safe-area padding for notch / home-indicator (PWA full-screen). */
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/*
+ * iOS Safari zooms the page when focusing an input whose font-size < 16px.
+ * Force 16px on touch/handset widths so focusing a field never zooms.
+ */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Thin, tidy scrollbars for the horizontal board */

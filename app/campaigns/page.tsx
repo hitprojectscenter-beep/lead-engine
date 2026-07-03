@@ -104,7 +104,8 @@ export default function CampaignsPage() {
         ) : rows.length === 0 ? (
           <div className="py-8 text-center text-sm text-slate-400">אין הרשמות עדיין.</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="-mx-2 overflow-x-auto px-2">
+          <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-right text-slate-500">
                 <th className="py-2">ליד</th>
@@ -134,6 +135,7 @@ export default function CampaignsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

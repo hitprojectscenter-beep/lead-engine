@@ -84,17 +84,17 @@ export default function Dashboard() {
             קליטה אוטומטית מווטסאפ, QR ודפי נחיתה · ניקוד וניתוב חכם
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute right-2.5 top-2.5 text-slate-400" size={16} />
             <input
-              className="input pr-8 w-56"
+              className="input w-full pr-8 sm:w-56"
               placeholder="חיפוש ליד…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
-          <button className="btn-primary" onClick={() => setShowNew(true)}>
+          <button className="btn-primary shrink-0" onClick={() => setShowNew(true)}>
             <Plus size={16} /> ליד חדש
           </button>
         </div>
@@ -284,10 +284,13 @@ function NewLeadDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
       onClick={onClose}
     >
-      <div className="card w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="card my-auto max-h-[90dvh] w-full max-w-md overflow-y-auto p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="mb-1 text-lg font-bold">ליד חדש</h2>
         <p className="mb-3 text-xs text-slate-500">
           מלאו טופס, או הדביקו טקסט/תמלול חופשי והמערכת תחלץ את הפרטים ותנקד אוטומטית.

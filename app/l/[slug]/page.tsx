@@ -25,7 +25,8 @@ export default function Landing({ params }: { params: Promise<{ slug: string }> 
   }
 
   return (
-    <div className="fixed inset-0 grid place-items-center bg-gradient-to-br from-brand-500 to-brand-700 p-4" dir="rtl">
+    <div className="fixed inset-0 overflow-y-auto bg-gradient-to-br from-brand-500 to-brand-700" dir="rtl">
+      <div className="pt-safe pb-safe flex min-h-full items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-500 text-white">
@@ -57,6 +58,7 @@ export default function Landing({ params }: { params: Promise<{ slug: string }> 
             <p className="text-center text-[11px] text-slate-400">מקור: {slug} · {via === "qr" ? "סריקת QR" : "אתר"}</p>
           </form>
         )}
+      </div>
       </div>
     </div>
   );

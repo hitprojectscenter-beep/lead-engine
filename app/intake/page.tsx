@@ -109,7 +109,7 @@ export default function IntakePage() {
 
   return (
     <div className="fixed inset-0 overflow-y-auto bg-slate-50" dir="rtl">
-      <div className="mx-auto max-w-md px-4 py-5">
+      <div className="pt-safe pb-safe mx-auto max-w-md px-4">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-500 text-white">
